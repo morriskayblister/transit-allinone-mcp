@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: transit-allinone-mcp
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: MCP_AUTH_TOKEN
+        generateValue: true
+      - key: BUSNEARBY_API_BASE
+        sync: false
