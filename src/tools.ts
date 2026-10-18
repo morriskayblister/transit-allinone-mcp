@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { stride, isoMinutesAgo, today, type ToolDef } from "./stride.ts";
-import { busnearbyConfigured, busnearbyDirections } from "./busnearby.ts";
+import { directions } from "./busnearby.ts";
 
 // Curated, human-friendly tools built on top of the Stride endpoints.
 export const curatedTools: ToolDef[] = [
@@ -57,15 +57,19 @@ export const curatedTools: ToolDef[] = [
   },
   {
     name: "plan_transit_route",
-    description: "Plan a transit route between two coordinates using BusNearby. Requires BUSNEARBY_API_BASE on the server; the endpoint path is not yet verified.",
+    description: "Plan a public transit route between two 'address::lat,lng' points by calling the BusNearby REST API directly (GET /directions). Wraps busnearby_directions with a simpler interface.",
     inputSchema: {
-      origin_lat: z.number(), origin_lon: z.number(),
-      destination_lat: z.number(), destination_lon: z.number(),
-      departure_time: z.string().optional().describe("ISO 8601 with timezone"),
+      from_place: z.string().describe("Origin as 'address::lat,lng'"),
+      to_place: z.string().describe("Destination as 'address::lat,lng'"),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe("YYYY-MM-DD, with time"),
+      time: z.string().regex(/^\d{2}:\d{2}$/).optional().describe("HH:MM, with date"),
+      arrive_by: z.boolean().default(false),
+      wheelchair: z.boolean().default(false),
+      num_itineraries: z.number().int().min(1).max(10).default(3),
     },
-    handler: async ({ origin_lat, origin_lon, destination_lat, destination_lon, departure_time }) => {
-      if (!busnearbyConfigured()) return { error: "BUSNEARBY_API_BASE is not configured on this server" };
-      return busnearbyDirections({ lat: origin_lat, lon: origin_lon }, { lat: destination_lat, lon: destination_lon }, departure_time);
+    handler: ({ from_place, to_place, date, time, arrive_by, wheelchair, num_itineraries }) => {
+      if ((date === undefined) !== (time === undefined)) throw new Error("date and time must be provided together");
+      return directions({ fromPlace: from_place, toPlace: to_place, date, time, arriveBy: arrive_by, wheelchair, numItineraries: num_itineraries });
     },
   },
 ];

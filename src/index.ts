@@ -3,13 +3,14 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadStrideTools, type ToolDef } from "./stride.ts";
 import { curatedTools } from "./tools.ts";
+import { busnearbyTools } from "./busnearby.ts";
 
 // Load the full Stride endpoint set once at startup from the live spec.
 const strideTools = await loadStrideTools();
-const allTools: ToolDef[] = [...curatedTools, ...strideTools.tools];
+const allTools: ToolDef[] = [...curatedTools, ...busnearbyTools, ...strideTools.tools];
 
 function buildServer(): McpServer {
-  const server = new McpServer({ name: "transit-allinone-mcp", version: "0.2.0" });
+  const server = new McpServer({ name: "transit-allinone-mcp", version: "0.3.0" });
   for (const t of allTools) {
     server.registerTool(t.name, { description: t.description, inputSchema: t.inputSchema }, async (args: any) => {
       try {
@@ -42,7 +43,6 @@ if (process.argv.includes("--stdio")) {
       if (token && req.headers.get("authorization") !== `Bearer ${token}`) {
         return new Response("Unauthorized", { status: 401 });
       }
-      // Stateless: fresh server and transport per request.
       const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
       const server = buildServer();
       await server.connect(transport);

@@ -9,5 +9,5 @@ services:
         value: 3000
       - key: MCP_AUTH_TOKEN
         generateValue: true
-      - key: BUSNEARBY_API_BASE
-        sync: false
+      - key: BUSNEARBY_BASE_URL
+        value: https://api.busnearby.co.il
